@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Under and Over 7 - 3D Dice Casino & Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #1a192b;
+            --bg-secondary: #232138;
+            --gold-light: #e5c675;
+            --gold-mid: #b39246;
+            --gold-dark: #7a5f24;
+            --green-play: #54b82e;
+            --green-play-dark: #38851b;
+            --blue-btn: #2563eb;
+            --blue-btn-dark: #1d4ed8;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Hind Siliguri', 'Inter', sans-serif;
+            background-color: #11101d;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            overflow-x: hidden;
+        }
+
+        /* Mobile App Container mimicking the video */
+        .app-shell {
+            width: 100%;
+            max-width: 440px;
+            min-height: 100vh;
+            background: radial-gradient(circle at 50% 35%, #2c2a4a 0%, #1b1a2e 65%, #141322 100%);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+            overflow: hidden;
+        }
+
+        /* Subtle background watermark dice silhouette */
+        .bg-watermark {
+            position: absolute;
+            bottom: -40px;
+            left: 50%;
+            transform: translateX(-50%) rotate(-15deg);
+            width: 280px;
+            height: 280px;
+            border-radius: 45px;
+            background: rgba(15, 14, 26, 0.45);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Live Winners Marquee Ticker */
+        .ticker-wrap {
+            width: 100%;
+            overflow: hidden;
+            background: rgba(15, 14, 25, 0.65);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 5px 0;
+            white-space: nowrap;
+            z-index: 10;
+        }
+
+        .ticker-move {
+            display: inline-block;
+            animation: tickerScroll 28s linear infinite;
+        }
+
+        @keyframes tickerScroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* Metallic Gold Rim Sockets for 3D Dice */
+        .dice-socket-outer {
+            width: 148px;
+            height: 148px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #d8b863, #826629, #e6c875, #69501c);
+            padding: 5px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .dice-socket-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle at 50% 45%, #302d47 0%, #191826 75%, #0e0d17 100%);
+            border: 3px solid #2b273d;
+            box-shadow: inset 0 8px 18px rgba(0, 0, 0, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            perspective: 600px;
+            overflow: hidden;
+        }
+
+        /* Authentic 3D CSS Cube Dice */
+        .cube-scene {
+            width: 78px;
+            height: 78px;
+            perspective: 500px;
+        }
+
+        .cube {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.85s cubic-bezier(0.2, 0.85, 0.3, 1.05);
+        }
+
+        .cube.rolling {
+            animation: diceTumble 0.45s linear infinite;
+        }
+
+        @keyframes diceTumble {
+            0% { transform: translateZ(-39px) rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
+            50% { transform: translateZ(-39px) rotateX(180deg) rotateY(220deg) rotateZ(90deg); }
+            100% { transform: translateZ(-39px) rotateX(360deg) rotateY(360deg) rotateZ(180deg); }
+        }
+
+        .cube-face {
+            position: absolute;
+            width: 78px;
+            height: 78px;
+            border-radius: 15px;
+            background: linear-gradient(145deg, #ffffff 0%, #e6e7ec 70%, #cfd2db 100%);
+            border: 2px solid #c5c8d4;
+            box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.14), inset 2px 2px 4px rgba(255, 255, 255, 0.95);
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            padding: 11px;
+            gap: 3px;
+            backface-visibility: hidden;
+        }
+
+        /* 3D Cube Face Transforms */
+        .face-1 { transform: rotateY(0deg) translateZ(39px); }
+        .face-2 { transform: rotateY(90deg) translateZ(39px); }
+        .face-3 { transform: rotateX(90deg) translateZ(39px); }
+        .face-4 { transform: rotateX(-90deg) translateZ(39px); }
+        .face-5 { transform: rotateY(-90deg) translateZ(39px); }
+        .face-6 { transform: rotateY(180deg) translateZ(39px); }
+
+        /* Dice Pips (Dots) */
+        .pip {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #3a3d4a 0%, #14151c 80%);
+            box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.8), 0 1px 1px rgba(255, 255, 255, 0.7);
+            align-self: center;
+            justify-self: center;
+        }
+
+        .pip.red-pip {
+            background: radial-gradient(circle at 35% 35%, #ef4444 0%, #991b1b 85%);
+        }
+
+        /* Grid positions for standard dice faces */
+        .p-tl { grid-area: 1 / 1; }
+        .p-tr { grid-area: 1 / 3; }
+        .p-ml { grid-area: 2 / 1; }
+        .p-mc { grid-area: 2 / 2; }
+        .p-mr { grid-area: 2 / 3; }
+        .p-bl { grid-area: 3 / 1; }
+        .p-br { grid-area: 3 / 3; }
+
+        /* Gold Framed Bet Cards */
+        .bet-card {
+            background: linear-gradient(180deg, #27253d 0%, #1a1829 100%);
+            border: 1.5px solid #8c7032;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+            cursor: pointer;
+        }
+
+        .bet-card.selected {
+            background: linear-gradient(180deg, #3c355c 0%, #25213b 100%);
+            border: 2px solid #f2cf66;
+            box-shadow: 0 0 14px rgba(229, 198, 117, 0.35);
+            transform: translateY(-2px);
+        }
+
+        .radio-circle {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid #c9a752;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #171624;
+        }
+
+        .bet-card.selected .radio-circle::after {
+            content: '';
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #f5d061;
+            box-shadow: 0 0 6px #f5d061;
+        }
+
+        /* Metallic Gold Small Multiplier Buttons (MIN, X2, X/2, MAX) */
+        .gold-mini-btn {
+            background: linear-gradient(180deg, #2e2b45 0%, #1c1a2b 100%);
+            border: 1.5px solid #9e7f3a;
+            border-radius: 8px;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 13px;
+            padding: 8px 0;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+            transition: transform 0.1s, border-color 0.2s;
+        }
+
+        .gold-mini-btn:active {
+            transform: scale(0.95);
+            border-color: #f5d061;
+        }
+
+        /* Bottom Action Buttons with Gold Outer Frames */
+        .action-frame {
+            padding: 4px;
+            border-radius: 16px;
+            background: linear-gradient(180deg, #c9a752 0%, #6e5520 100%);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.55);
+            transition: transform 0.12s ease;
+        }
+
+        .action-frame:active {
+            transform: scale(0.94);
+        }
+
+        .side-blue-btn {
+            width: 66px;
+            height: 66px;
+            border-radius: 12px;
+            background: linear-gradient(180deg, #2b6cb0 0%, #1a365d 100%);
+            border: 1px solid #63b3ed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .center-play-btn {
+            width: 84px;
+            height: 84px;
+            border-radius: 14px;
+            background: linear-gradient(180deg, #74d645 0%, #449e22 60%, #2f7514 100%);
+            border: 1.5px solid #a8f084;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 2px 6px rgba(255, 255, 255, 0.45);
+        }
+
+        .center-play-btn:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        /* Status Banner Animations */
+        .banner-win {
+            background: linear-gradient(90deg, #2d7a18 0%, #52b830 50%, #2d7a18 100%) !important;
+            border-color: #9ae67e !important;
+            animation: pulseWin 0.6s ease;
+        }
+
+        .banner-lose {
+            background: linear-gradient(90deg, #7a1829 0%, #b8253e 50%, #7a1829 100%) !important;
+            border-color: #f0758a !important;
+        }
+
+        @keyframes pulseWin {
+            0% { transform: scale(0.96); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+
+        /* Custom Scrollbar for Admin Panel & History */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #141322;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #8c7032;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-shell">
+    <div class="bg-watermark"></div>
+
+    <!-- TOP HEADER BAR (Matches video top bar + Admin Switcher) -->
+    <header class="relative z-20 flex items-center justify-between px-3 py-2.5 bg-[#151424]/90 border-b border-white/10">
+        <!-- Left: Sound Toggle & View Switch -->
+        <div class="flex items-center gap-1.5">
+            <button id="soundToggleBtn" onclick="toggleSound()" title="সাউন্ড অন/অফ"
+                class="w-8 h-8 rounded-lg bg-[#27253d] border border-[#8c7032]/60 flex items-center justify-center text-amber-300 hover:bg-[#322f4d]">
+                <svg id="soundOnIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                </svg>
+                <svg id="soundOffIcon" class="w-4 h-4 hidden text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Center: Balance Pill with Green '+' Deposit Button -->
+        <div class="flex items-center bg-[#26243b] border border-white/15 rounded-full pl-3.5 pr-1 py-1 shadow-inner">
+            <span id="headerBalance" class="font-bold text-sm tracking-wide text-white mr-2.5">1214.66 ৳</span>
+            <button onclick="openDepositModal()" class="w-6 h-6 rounded-full bg-[#4db82e] hover:bg-[#5cd13b] flex items-center justify-center text-white font-bold text-base shadow">
+                +
+            </button>
+        </div>
+
+        <!-- Right: Admin Control Panel Toggle Button -->
+        <button id="adminToggleBtn" onclick="toggleAdminView()"
+            class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-amber-600 to-amber-500 text-slate-950 font-bold text-xs shadow-md hover:brightness-110 transition">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <span id="adminToggleText">অ্যাডমিন</span>
+        </button>
+    </header>
+
+    <!-- LIVE WINNERS TICKER -->
+    <div class="ticker-wrap text-[11px] font-medium text-gray-300">
+        <div class="ticker-move" id="winnersTicker">
+            <!-- Populated dynamically via JS -->
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- VIEW 1: MAIN 3D DICE GAME VIEW                            -->
+    <!-- ========================================================= -->
+    <main id="gameView" class="relative z-10 flex-1 flex flex-col justify-between px-4 pt-3 pb-6">
+
+        <!-- Top Rules Badge + Status Banner -->
+        <div class="relative flex items-center justify-center mt-1 mb-2">
+            <!-- Golden Question Mark Rules Icon (Top Left like video) -->
+            <button onclick="openRulesModal()" title="খেলার নিয়ম"
+                class="absolute left-0 -top-1 w-9 h-9 rounded-lg bg-gradient-to-b from-[#d9b65b] to-[#8c6c23] border border-[#f7df94] flex items-center justify-center text-white font-extrabold text-lg shadow-lg active:scale-95">
+                ?
+            </button>
+
+            <!-- Status Instruction / Result Banner -->
+            <div id="statusBanner" class="w-[74%] ml-6 py-2 px-3 rounded-lg bg-[#292742]/95 border border-white/15 text-center text-xs sm:text-sm font-semibold text-gray-100 shadow-md transition-all duration-300">
+                আপনার বাজি নির্বাচন করুন
+            </div>
+        </div>
+
+        <!-- CENTER: TWO METALLIC GOLD SOCKETS WITH 3D CSS DICE -->
+        <div class="flex items-center justify-center gap-4 my-3">
+            <!-- Left 3D Dice Socket -->
+            <div class="dice-socket-outer">
+                <div class="dice-socket-inner">
+                    <div class="cube-scene">
+                        <div class="cube" id="diceCube1">
+                            <!-- Face 1 -->
+                            <div class="cube-face face-1"><span class="pip p-mc red-pip"></span></div>
+                            <!-- Face 2 -->
+                            <div class="cube-face face-2"><span class="pip p-tr"></span><span class="pip p-bl"></span></div>
+                            <!-- Face 3 -->
+                            <div class="cube-face face-3"><span class="pip p-tr"></span><span class="pip p-mc"></span><span class="pip p-bl"></span></div>
+                            <!-- Face 4 -->
+                            <div class="cube-face face-4"><span class="pip p-tl"></span><span class="pip p-tr"></span><span class="pip p-bl"></span><span class="pip p-br"></span></div>
+                            <!-- Face 5 -->
+                            <div class="cube-face face-5"><span class="pip p-tl"></span><span class="pip p-tr"></span><span class="pip p-mc"></span><span class="pip p-bl"></span><span class="pip p-br"></span></div>
+                            <!-- Face 6 -->
+                            <div class="cube-face face-6"><span class="pip p-tl"></span><span class="pip p-tr"></span><span class="pip p-ml"></span><span class="pip p-mr"></span><span class="pip p-bl"></span><span class="pip p-br"></span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right 3D Dice Socket -->
+            <div class="dice-socket-outer">
+                <div class="dice-socket-inner">
+                    <div class="cube-scene">
+                        <div class="cube" id="diceCube2">
+                            <!-- Face 1 -->
+                            <div class="cube-face face-1"><span class="pip p-mc red-pip"></span></div>
+                            <!-- Face 2 -->
+                            <div class="cube-face face-2"><span class="pip p-tr"></span><span class="pip p-bl"></span></div>
+                            <!-- Face 3 -->
+                            <div class="cube-face face-3"><span class="pip p-tr"></span><span class="pip p-mc"></span><span class="pip p-bl"></span></div>
+                            <!-- Face 4 -->
+                            <div class="cube-face face-4"><span class="pip p-tl"></span><span class="pip p-tr"></span><span class="pip p-bl"></span><span class="pip p-br"></span></div>
+                            <!-- Face 5 -->
+                            <div class="cube-face face-5"><span class="pip p-tl"></span><span class="pip p-tr"></span><span class="pip p-mc"></span><span class="pip p-bl"></span><span class="pip p-br"></span></div>
+                            <!-- Face 6 -->
+                            <div class="cube-face face-6"><span class="pip p-tl"></span><span class="pip p-tr"></span><span class="pip p-ml"></span><span class="pip p-mr"></span><span class="pip p-bl"></span><span class="pip p-br"></span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Last Dice Sum Indicator Pill -->
+        <div class="flex justify-center -mt-1 mb-2">
+            <span id="lastRollBadge" class="text-[11px] px-3 py-0.5 rounded-full bg-black/35 border border-amber-500/30 text-amber-200/90">
+                ডাইস যোগফল: <strong id="diceSumText">7</strong>
+            </span>
+        </div>
+
+        <!-- THREE BETTING SELECTION CARDS (বেশি 7 | সমান 7 | নিচে 7) -->
+        <div class="grid grid-cols-3 gap-2.5 mb-3">
+            <!-- Over 7 -->
+            <div id="card-over" onclick="selectBet('over')" class="bet-card selected py-2.5 px-2 flex flex-col items-center justify-center">
+                <span class="text-xs sm:text-sm font-bold text-gray-100 mb-1.5">বেশি 7</span>
+                <div class="flex items-center gap-1.5">
+                    <span class="radio-circle"></span>
+                    <span class="text-sm sm:text-base font-extrabold text-white">x <span id="multOverDisplay">2.3</span></span>
+                </div>
+            </div>
+
+            <!-- Equal 7 -->
+            <div id="card-equal" onclick="selectBet('equal')" class="bet-card py-2.5 px-2 flex flex-col items-center justify-center">
+                <span class="text-xs sm:text-sm font-bold text-gray-100 mb-1.5">সমান 7</span>
+                <div class="flex items-center gap-1.5">
+                    <span class="radio-circle"></span>
+                    <span class="text-sm sm:text-base font-extrabold text-white">x <span id="multEqualDisplay">5.8</span></span>
+                </div>
+            </div>
+
+            <!-- Under 7 -->
+            <div id="card-under" onclick="selectBet('under')" class="bet-card py-2.5 px-2 flex flex-col items-center justify-center">
+                <span class="text-xs sm:text-sm font-bold text-gray-100 mb-1.5">নিচে 7</span>
+                <div class="flex items-center gap-1.5">
+                    <span class="radio-circle"></span>
+                    <span class="text-sm sm:text-base font-extrabold text-white">x <span id="multUnderDisplay">2.3</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- QUICK MULTIPLIER BUTTONS (MIN, X2, X/2, MAX) -->
+        <div class="grid grid-cols-4 gap-2 mb-2.5">
+            <button onclick="adjustBet('min')" class="gold-mini-btn">MIN</button>
+            <button onclick="adjustBet('x2')" class="gold-mini-btn">X2</button>
+            <button onclick="adjustBet('half')" class="gold-mini-btn">X/2</button>
+            <button onclick="adjustBet('max')" class="gold-mini-btn">MAX</button>
+        </div>
+
+        <!-- BET AMOUNT INPUT DISPLAY PILL -->
+        <div class="flex items-center justify-between bg-[#1b192c] border border-[#8c7032] rounded-lg px-3 py-2 mb-4 shadow-inner">
+            <span class="text-xs text-amber-300/80 font-semibold">বাজির পরিমাণ:</span>
+            <div class="flex items-center gap-1">
+                <input id="betAmountInput" type="number" value="40" min="10" max="50000"
+                    onchange="validateBetInput()"
+                    class="w-24 bg-transparent text-right font-extrabold text-base text-white focus:outline-none">
+                <span class="font-bold text-sm text-amber-400">BDT</span>
+            </div>
+        </div>
+
+        <!-- BOTTOM ACTION BUTTONS (Coins/History | Big Green Play | Auto/Reset) -->
+        <div class="flex items-center justify-center gap-5 mt-1">
+            <!-- Left Button: Bet History / Coins -->
+            <button onclick="openHistoryModal()" title="বেটিং হিস্ট্রি" class="action-frame">
+                <div class="side-blue-btn">
+                    <svg class="w-8 h-8 text-white drop-shadow" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 3C7.58 3 4 4.79 4 7v10c0 2.21 3.58 4 8 4s8-1.79 8-4V7c0-2.21-3.58-4-8-4zm0 2c3.87 0 6 1.5 6 2s-2.13 2-6 2-6-1.5-6-2 2.13-2 6-2zm0 14c-3.87 0-6-1.5-6-2v-2.23c1.61.78 3.72 1.23 6 1.23s4.39-.45 6-1.23V17c0 .5-2.13 2-6 2zm0-5c-3.87 0-6-1.5-6-2V9.77c1.61.78 3.72 1.23 6 1.23s4.39-.45 6-1.23V12c0 .5-2.13 2-6 2z"/>
+                    </svg>
+                </div>
+            </button>
+
+            <!-- Center Large Green Play Button -->
+            <button id="playBtn" onclick="rollDiceGame()" class="action-frame">
+                <div class="center-play-btn">
+                    <svg class="w-11 h-11 text-white ml-1 drop-shadow-md" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                </div>
+            </button>
+
+            <!-- Right Button: Auto-Roll Toggle -->
+            <button id="autoRollBtn" onclick="toggleAutoRoll()" title="অটো প্লে" class="action-frame">
+                <div id="autoRollInner" class="side-blue-btn flex-col">
+                    <svg id="autoRollIcon" class="w-7 h-7 text-white drop-shadow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    <span id="autoRollLabel" class="text-[9px] font-bold tracking-wider uppercase mt-0.5">AUTO</span>
+                </div>
+            </button>
+        </div>
+    </main>
+
+    <!-- ========================================================= -->
+    <!-- VIEW 2: INTEGRATED ADMIN CONTROL PANEL                    -->
+    <!-- ========================================================= -->
+    <section id="adminView" class="hidden relative z-10 flex-1 overflow-y-auto px-4 py-4 space-y-4">
+        <div class="flex items-center justify-between border-b border-amber-500/30 pb-2.5">
+            <div>
+                <h2 class="text-lg font-bold text-amber-400">অ্যাডমিন কন্ট্রোল প্যানেল</h2>
+                <p class="text-xs text-gray-400">গেমের রেজাল্ট, মাল্টিপ্লায়ার ও ব্যালেন্স নিয়ন্ত্রণ করুন</p>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <button onclick="lockAdminPanel()" class="px-2.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow">
+                    লক / লগআউট
+                </button>
+                <button onclick="toggleAdminView()" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold shadow">
+                    গেমে ফিরুন
+                </button>
+            </div>
+        </div>
+
+        <!-- 1. Live House Profit & Statistics -->
+        <div class="grid grid-cols-3 gap-2">
+            <div class="bg-[#232138] border border-white/10 rounded-xl p-2.5 text-center">
+                <p class="text-[11px] text-gray-400">মোট বেট</p>
+                <p id="adminTotalBets" class="text-base font-extrabold text-white mt-0.5">0</p>
+            </div>
+            <div class="bg-[#232138] border border-white/10 rounded-xl p-2.5 text-center">
+                <p class="text-[11px] text-gray-400">মোট বাজি (BDT)</p>
+                <p id="adminTotalWagered" class="text-base font-extrabold text-amber-300 mt-0.5">0 ৳</p>
+            </div>
+            <div class="bg-[#232138] border border-white/10 rounded-xl p-2.5 text-center">
+                <p class="text-[11px] text-gray-400">হাউস প্রফিট</p>
+                <p id="adminHouseProfit" class="text-base font-extrabold text-emerald-400 mt-0.5">0 ৳</p>
+            </div>
+        </div>
+
+        <!-- 2. Game Outcome Control (House Edge / Rigging System) -->
+        <div class="bg-[#232138] border border-[#8c7032]/70 rounded-xl p-3.5 space-y-3">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold text-amber-300">১. গেম রেজাল্ট কন্ট্রোল (Outcome Mode)</h3>
+                <span id="currentModeBadge" class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">
+                    Fair Random
+                </span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-xs">
+                <button onclick="setOutcomeMode('fair')" id="mode-fair"
+                    class="mode-btn py-2 px-2.5 rounded-lg border border-amber-400 bg-amber-500/20 text-white font-bold text-left">
+                    🎲 ন্যায্য র‍্যান্ডম (Fair)
+                </button>
+                <button onclick="setOutcomeMode('win')" id="mode-win"
+                    class="mode-btn py-2 px-2.5 rounded-lg border border-white/15 bg-[#191829] text-gray-300 font-semibold text-left">
+                    ✅ সবসময় জিতবে (Force Win)
+                </button>
+                <button onclick="setOutcomeMode('lose')" id="mode-lose"
+                    class="mode-btn py-2 px-2.5 rounded-lg border border-white/15 bg-[#191829] text-gray-300 font-semibold text-left">
+                    ❌ সবসময় হারবে (Force Lose)
+                </button>
+                <button onclick="setOutcomeMode('custom')" id="mode-custom"
+                    class="mode-btn py-2 px-2.5 rounded-lg border border-white/15 bg-[#191829] text-gray-300 font-semibold text-left">
+                    📊 কাস্টম উইন রেট (%)
+                </button>
+            </div>
+
+            <!-- Custom Win Probability Slider -->
+            <div id="customProbBox" class="pt-1 border-t border-white/10">
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-gray-300">প্লেয়ার জেতার সম্ভাবনা (Win Rate):</span>
+                    <span id="winProbLabel" class="font-bold text-amber-400">35%</span>
+                </div>
+                <input id="winProbSlider" type="range" min="0" max="100" value="35"
+                    oninput="updateWinProb(this.value)"
+                    class="w-full accent-amber-400 cursor-pointer">
+            </div>
+        </div>
+
+        <!-- 3. Multiplier / Odds Configuration -->
+        <div class="bg-[#232138] border border-white/10 rounded-xl p-3.5 space-y-2.5">
+            <h3 class="text-sm font-bold text-amber-300">২. মাল্টিপ্লায়ার সেটিংস (Odds)</h3>
+            <div class="grid grid-cols-3 gap-2 text-xs">
+                <div>
+                    <label class="block text-gray-400 mb-1">বেশি 7 (Over)</label>
+                    <input id="adminMultOver" type="number" step="0.1" value="2.3"
+                        class="w-full bg-[#161524] border border-white/20 rounded-lg px-2 py-1.5 text-white font-bold">
+                </div>
+                <div>
+                    <label class="block text-gray-400 mb-1">সমান 7 (Equal)</label>
+                    <input id="adminMultEqual" type="number" step="0.1" value="5.8"
+                        class="w-full bg-[#161524] border border-white/20 rounded-lg px-2 py-1.5 text-white font-bold">
+                </div>
+                <div>
+                    <label class="block text-gray-400 mb-1">নিচে 7 (Under)</label>
+                    <input id="adminMultUnder" type="number" step="0.1" value="2.3"
+                        class="w-full bg-[#161524] border border-white/20 rounded-lg px-2 py-1.5 text-white font-bold">
+                </div>
+            </div>
+            <button onclick="saveAdminMultipliers()"
+                class="w-full py-2 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-bold text-xs shadow hover:brightness-110">
+                মাল্টিপ্লায়ার আপডেট করুন
+            </button>
+        </div>
+
+        <!-- 4. User Balance & Deposit Approval -->
+        <div class="bg-[#232138] border border-white/10 rounded-xl p-3.5 space-y-2.5">
+            <h3 class="text-sm font-bold text-amber-300">৩. ইউজার ব্যালেন্স ম্যানেজমেন্ট</h3>
+            <div class="flex items-center gap-2">
+                <input id="adminBalanceInput" type="number" placeholder="পরিমাণ (BDT)" value="500"
+                    class="flex-1 bg-[#161524] border border-white/20 rounded-lg px-3 py-1.5 text-sm text-white font-bold">
+                <button onclick="adminModifyBalance(1)" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold">+ যোগ</button>
+                <button onclick="adminModifyBalance(-1)" class="px-3 py-1.5 rounded-lg bg-rose-600 text-white text-xs font-bold">- কাটুন</button>
+            </div>
+            <!-- Pending Deposit Requests -->
+            <div id="pendingDepositsContainer" class="space-y-1.5 pt-1"></div>
+        </div>
+
+        <!-- 5. Live Bet Logs Table -->
+        <div class="bg-[#232138] border border-white/10 rounded-xl p-3.5">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-bold text-amber-300">৪. সাম্প্রতিক বেটিং লগ</h3>
+                <button onclick="clearHistoryLogs()" class="text-[11px] text-rose-400 hover:underline">ক্লিয়ার</button>
+            </div>
+            <div class="overflow-x-auto max-h-48">
+                <table class="w-full text-[11px] text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-white/15 text-gray-400">
+                            <th class="py-1.5">পছন্দ</th>
+                            <th class="py-1.5">ডাইস</th>
+                            <th class="py-1.5">বাজি</th>
+                            <th class="py-1.5 text-right">ফলাফল</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminLogsBody">
+                        <tr><td colspan="4" class="py-3 text-center text-gray-500">এখনো কোনো খেলা হয়নি</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- MODAL: ADMIN PASSWORD AUTHENTICATION                      -->
+    <!-- ========================================================= -->
+    <div id="adminAuthModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="w-full max-w-xs bg-[#232138] border-2 border-[#c9a752] rounded-2xl p-5 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-white/10 pb-2.5">
+                <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                    </span>
+                    <h3 class="font-bold text-base text-amber-400">অ্যাডমিন ভেরিফিকেশন</h3>
+                </div>
+                <button onclick="closeModal('adminAuthModal')" class="text-gray-400 hover:text-white text-xl font-bold leading-none">&times;</button>
+            </div>
+
+            <div class="space-y-2">
+                <label for="adminPassInput" class="block text-xs font-semibold text-gray-200">অ্যাডমিন পাসওয়ার্ড দিন</label>
+                <div class="relative">
+                    <input id="adminPassInput" type="password" placeholder="পাসওয়ার্ড লিখুন..."
+                        onkeydown="if(event.key === 'Enter') verifyAdminPassword()"
+                        class="w-full bg-[#151424] border border-[#8c7032] focus:border-amber-400 rounded-xl pl-3.5 pr-10 py-2.5 text-sm text-white font-semibold focus:outline-none">
+                    <button type="button" onclick="toggleAdminPassVisibility()" title="পাসওয়ার্ড দেখুন/লুকান"
+                        class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-amber-300 p-1">
+                        <svg id="eyeOpenIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                        <svg id="eyeClosedIcon" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                        </svg>
+                    </button>
+                </div>
+                <p id="adminPassError" class="hidden text-xs font-semibold text-rose-400 bg-rose-950/50 border border-rose-500/40 rounded-lg px-2.5 py-1.5">
+                    ভুল পাসওয়ার্ড! আবার চেষ্টা করুন।
+                </p>
+            </div>
+
+            <div class="flex gap-2 pt-1">
+                <button onclick="closeModal('adminAuthModal')"
+                    class="flex-1 py-2.5 rounded-xl bg-[#322f4d] hover:bg-[#3e3a5e] text-gray-200 font-bold text-xs">
+                    বাতিল
+                </button>
+                <button onclick="verifyAdminPassword()"
+                    class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-extrabold text-xs shadow-lg hover:brightness-110">
+                    লগইন করুন
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- MODAL: DEPOSIT REQUEST (Triggered by Green '+' button)    -->
+    <!-- ========================================================= -->
+    <div id="depositModal" class="hidden fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
+        <div class="w-full max-w-xs bg-[#232138] border border-[#8c7032] rounded-2xl p-4 shadow-2xl space-y-3">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-base text-amber-400">ব্যালেন্স ডিপোজিট</h3>
+                <button onclick="closeModal('depositModal')" class="text-gray-400 hover:text-white text-lg font-bold">&times;</button>
+            </div>
+            <p class="text-xs text-gray-300">দ্রুত ব্যালেন্স যোগ করুন অথবা অ্যাডমিন অনুমোদনের জন্য রিকোয়েস্ট পাঠান:</p>
+            <div class="grid grid-cols-3 gap-2">
+                <button onclick="setDepositVal(200)" class="py-1.5 rounded bg-[#161524] border border-white/15 text-xs font-bold">200 ৳</button>
+                <button onclick="setDepositVal(500)" class="py-1.5 rounded bg-[#161524] border border-white/15 text-xs font-bold">500 ৳</button>
+                <button onclick="setDepositVal(1000)" class="py-1.5 rounded bg-[#161524] border border-white/15 text-xs font-bold">1000 ৳</button>
+            </div>
+            <input id="userDepositInput" type="number" value="500" class="w-full bg-[#161524] border border-amber-500/50 rounded-lg px-3 py-2 text-white font-bold text-sm">
+            <div class="flex gap-2">
+                <button onclick="instantDeposit()" class="flex-1 py-2 rounded-lg bg-emerald-600 text-white text-xs font-bold">ইনস্ট্যান্ট যোগ</button>
+                <button onclick="requestDeposit()" class="flex-1 py-2 rounded-lg bg-amber-500 text-slate-950 text-xs font-bold">অ্যাডমিন রিকোয়েস্ট</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- MODAL: GAME RULES ('?' button)                            -->
+    <!-- ========================================================= -->
+    <div id="rulesModal" class="hidden fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
+        <div class="w-full max-w-xs bg-[#232138] border border-[#8c7032] rounded-2xl p-4 shadow-2xl space-y-3">
+            <div class="flex justify-between items-center border-b border-white/10 pb-2">
+                <h3 class="font-bold text-base text-amber-400">খেলার নিয়মাবলী</h3>
+                <button onclick="closeModal('rulesModal')" class="text-gray-400 hover:text-white text-lg font-bold">&times;</button>
+            </div>
+            <ul class="text-xs text-gray-200 space-y-2 leading-relaxed">
+                <li>🎲 দুটি ৩ডি ডাইস (ছক্কা) রোল করা হবে।</li>
+                <li>📈 <strong>বেশি 7:</strong> দুটি ডাইসের যোগফল ৮ থেকে ১২ হলে আপনি জিতবেন।</li>
+                <li>🎯 <strong>সমান 7:</strong> দুটি ডাইসের যোগফল ঠিক ৭ হলে সর্বোচ্চ পুরস্কার জিতবেন।</li>
+                <li>📉 <strong>নিচে 7:</strong> দুটি ডাইসের যোগফল ২ থেকে ৬ হলে আপনি জিতবেন।</li>
+            </ul>
+            <button onclick="closeModal('rulesModal')" class="w-full py-2 rounded-lg bg-amber-500 text-slate-950 font-bold text-xs">বুঝেছি</button>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- MODAL: PLAYER BET HISTORY (Left Coins button)             -->
+    <!-- ========================================================= -->
+    <div id="historyModal" class="hidden fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
+        <div class="w-full max-w-sm bg-[#232138] border border-[#8c7032] rounded-2xl p-4 shadow-2xl space-y-3">
+            <div class="flex justify-between items-center border-b border-white/10 pb-2">
+                <h3 class="font-bold text-base text-amber-400">আপনার বেটিং হিস্ট্রি</h3>
+                <button onclick="closeModal('historyModal')" class="text-gray-400 hover:text-white text-lg font-bold">&times;</button>
+            </div>
+            <div id="playerHistoryList" class="max-h-60 overflow-y-auto space-y-2 text-xs">
+                <p class="text-center text-gray-400 py-4">কোনো রেকর্ড পাওয়া যায়নি</p>
+            </div>
+            <button onclick="closeModal('historyModal')" class="w-full py-2 rounded-lg bg-[#322f4d] text-white font-bold text-xs">বন্ধ করুন</button>
+        </div>
+    </div>
+
+    <!-- Toast Notification Box (Replaces alert) -->
+    <div id="toastBox" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-slate-900/95 border border-amber-400 text-amber-200 text-xs font-semibold shadow-xl opacity-0 pointer-events-none transition-opacity duration-300">
+        বার্তা
+    </div>
+</div>
+
+<script>
+    // =========================================================
+    // GAME STATE & CONFIGURATION
+    // =========================================================
+    const state = {
+        balance: 1214.66,
+        selectedBet: 'over', // 'over' | 'equal' | 'under'
+        betAmount: 40,
+        minBet: 10,
+        maxBet: 10000,
+        isRolling: false,
+        autoRoll: false,
+        autoRollTimer: null,
+        soundEnabled: true,
+        isAdminOpen: false,
+        isAdminUnlocked: false,
+        adminPassword: 'K.71?17426k$@:#',
+        // Multipliers
+        multipliers: {
+            over: 2.3,
+            equal: 5.8,
+            under: 2.3
+        },
+        // Admin Control Settings
+        outcomeMode: 'fair', // 'fair' | 'win' | 'lose' | 'custom'
+        customWinProb: 35,
+        stats: {
+            totalBets: 0,
+            totalWagered: 0,
+            houseProfit: 0
+        },
+        history: [],
+        pendingDeposits: [
+            { id: 101, user: 'Player_884', amount: 500 }
+        ]
+    };
+
+    // Exact 3D Cube Rotation Angles to display face 1..6 forward
+    const faceRotations = {
+        1: 'translateZ(-39px) rotateX(0deg) rotateY(0deg)',
+        2: 'translateZ(-39px) rotateX(0deg) rotateY(-90deg)',
+        3: 'translateZ(-39px) rotateX(-90deg) rotateY(0deg)',
+        4: 'translateZ(-39px) rotateX(90deg) rotateY(0deg)',
+        5: 'translateZ(-39px) rotateX(0deg) rotateY(90deg)',
+        6: 'translateZ(-39px) rotateX(0deg) rotateY(180deg)'
+    };
+
+    // =========================================================
+    // WEB AUDIO API SOUND SYNTHESIZER (No external audio files)
+    // =========================================================
+    let audioCtx = null;
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+
+    function playClickSound() {
+        if (!state.soundEnabled) return;
+        initAudio();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(520, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(260, audioCtx.currentTime + 0.06);
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.06);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.06);
+    }
+
+    function playDiceRollSound() {
+        if (!state.soundEnabled) return;
+        initAudio();
+        // Simulate multiple wooden/plastic dice clacks
+        for (let i = 0; i < 6; i++) {
+            const time = audioCtx.currentTime + i * 0.11;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(220 + Math.random() * 180, time);
+            osc.frequency.exponentialRampToValueAtTime(90, time + 0.05);
+            gain.gain.setValueAtTime(0.18, time);
+            gain.gain.exponentialRampToValueAtTime(0.001, time + 0.055);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(time);
+            osc.stop(time + 0.06);
+        }
+    }
+
+    function playWinSound() {
+        if (!state.soundEnabled) return;
+        initAudio();
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        notes.forEach((freq, idx) => {
+            const time = audioCtx.currentTime + idx * 0.08;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, time);
+            gain.gain.setValueAtTime(0.16, time);
+            gain.gain.exponentialRampToValueAtTime(0.001, time + 0.25);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(time);
+            osc.stop(time + 0.26);
+        });
+    }
+
+    function playLoseSound() {
+        if (!state.soundEnabled) return;
+        initAudio();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(190, audioCtx.currentTime);
+        osc.frequency.linearRampToValueAtTime(125, audioCtx.currentTime + 0.25);
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.26);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.27);
+    }
+
+    // =========================================================
+    // INITIALIZATION & UI HELPERS
+    // =========================================================
+    function init() {
+        populateLiveTicker();
+        setDiceVisual(4, 3); // Initial dice showing 4 + 3 = 7 like video
+        updateUI();
+        renderPendingDeposits();
+    }
+
+    function populateLiveTicker() {
+        const winners = [
+            '****65 5 888 BDT',
+            '****11 13 745 BDT',
+            '****81 2 065 BDT',
+            '****45 4 354 BDT',
+            '****01 3 056 BDT',
+            '****41 60 414 BDT',
+            '****33 2 544 BDT',
+            '****85 17 330 BDT'
+        ];
+        const htmlItems = winners.map(w =>
+            `<span class="inline-flex items-center mx-3"><span class="text-amber-400 mr-1">👤</span>${w}</span>`
+        ).join('');
+        // Duplicate for seamless infinite marquee
+        document.getElementById('winnersTicker').innerHTML = htmlItems + htmlItems;
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById('toastBox');
+        toast.textContent = msg;
+        toast.classList.remove('opacity-0');
+        toast.classList.add('opacity-100');
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => {
+            toast.classList.remove('opacity-100');
+            toast.classList.add('opacity-0');
+        }, 2400);
+    }
+
+    function updateUI() {
+        document.getElementById('headerBalance').textContent = `${state.balance.toFixed(2)} ৳`;
+        document.getElementById('multOverDisplay').textContent = state.multipliers.over;
+        document.getElementById('multEqualDisplay').textContent = state.multipliers.equal;
+        document.getElementById('multUnderDisplay').textContent = state.multipliers.under;
+
+        // Admin Stats
+        document.getElementById('adminTotalBets').textContent = state.stats.totalBets;
+        document.getElementById('adminTotalWagered').textContent = `${state.stats.totalWagered.toFixed(0)} ৳`;
+        const profitEl = document.getElementById('adminHouseProfit');
+        profitEl.textContent = `${state.stats.houseProfit.toFixed(2)} ৳`;
+        profitEl.className = `text-base font-extrabold mt-0.5 ${state.stats.houseProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+    }
+
+    function setDiceVisual(d1, d2) {
+        document.getElementById('diceCube1').style.transform = faceRotations[d1];
+        document.getElementById('diceCube2').style.transform = faceRotations[d2];
+        document.getElementById('diceSumText').textContent = d1 + d2;
+    }
+
+    // =========================================================
+    // BETTING & CONTROLS LOGIC
+    // =========================================================
+    function selectBet(type) {
+        if (state.isRolling) return;
+        playClickSound();
+        state.selectedBet = type;
+        ['over', 'equal', 'under'].forEach(t => {
+            const el = document.getElementById(`card-${t}`);
+            if (t === type) el.classList.add('selected');
+            else el.classList.remove('selected');
+        });
+    }
+
+    function adjustBet(action) {
+        if (state.isRolling) return;
+        playClickSound();
+        let current = parseFloat(document.getElementById('betAmountInput').value) || state.minBet;
+        if (action === 'min') current = state.minBet;
+        if (action === 'x2') current = Math.min(state.maxBet, Math.floor(current * 2));
+        if (action === 'half') current = Math.max(state.minBet, Math.floor(current / 2));
+        if (action === 'max') current = Math.min(state.maxBet, Math.floor(state.balance));
+        if (current < state.minBet) current = state.minBet;
+        state.betAmount = current;
+        document.getElementById('betAmountInput').value = current;
+    }
+
+    function validateBetInput() {
+        let val = parseFloat(document.getElementById('betAmountInput').value);
+        if (isNaN(val) || val < state.minBet) val = state.minBet;
+        if (val > state.maxBet) val = state.maxBet;
+        state.betAmount = val;
+        document.getElementById('betAmountInput').value = val;
+    }
+
+    // Generate dice pair matching desired outcome (for Admin Control)
+    function generateDiceForOutcome(betType, shouldWin) {
+        const validPairs = [];
+        for (let d1 = 1; d1 <= 6; d1++) {
+            for (let d2 = 1; d2 <= 6; d2++) {
+                const sum = d1 + d2;
+                const isWin =
+                    (betType === 'over' && sum > 7) ||
+                    (betType === 'equal' && sum === 7) ||
+                    (betType === 'under' && sum < 7);
+                if (isWin === shouldWin) {
+                    validPairs.push([d1, d2]);
+                }
+            }
+        }
+        return validPairs[Math.floor(Math.random() * validPairs.length)];
+    }
+
+    function rollDiceGame() {
+        if (state.isRolling) return;
+        validateBetInput();
+
+        if (state.betAmount > state.balance) {
+            showToast('পর্যাপ্ত ব্যালেন্স নেই! উপরে + বাটনে ক্লিক করে ডিপোজিট করুন।');
+            if (state.autoRoll) toggleAutoRoll();
+            return;
+        }
+
+        state.isRolling = true;
+        document.getElementById('playBtn').disabled = true;
+
+        // Deduct bet
+        state.balance -= state.betAmount;
+        state.stats.totalBets += 1;
+        state.stats.totalWagered += state.betAmount;
+        state.stats.houseProfit += state.betAmount;
+        updateUI();
+
+        // Update banner to "Good Luck" like video ("আপনার ভাগ্য সুপ্রসন্ন হোক!")
+        const banner = document.getElementById('statusBanner');
+        banner.className = 'w-[74%] ml-6 py-2 px-3 rounded-lg bg-[#292742]/95 border border-amber-400/50 text-center text-xs sm:text-sm font-semibold text-amber-200 shadow-md transition-all duration-300';
+        banner.textContent = 'আপনার ভাগ্য সুপ্রসন্ন হোক!';
+
+        // Start 3D tumbling animation & sound
+        const cube1 = document.getElementById('diceCube1');
+        const cube2 = document.getElementById('diceCube2');
+        cube1.classList.add('rolling');
+        cube2.classList.add('rolling');
+        playDiceRollSound();
+
+        // Determine dice values according to Admin Outcome Mode
+        let d1, d2;
+        if (state.outcomeMode === 'fair') {
+            d1 = Math.floor(Math.random() * 6) + 1;
+            d2 = Math.floor(Math.random() * 6) + 1;
+        } else if (state.outcomeMode === 'win') {
+            [d1, d2] = generateDiceForOutcome(state.selectedBet, true);
+        } else if (state.outcomeMode === 'lose') {
+            [d1, d2] = generateDiceForOutcome(state.selectedBet, false);
+        } else if (state.outcomeMode === 'custom') {
+            const rollChance = Math.random() * 100;
+            const shouldWin = rollChance < state.customWinProb;
+            [d1, d2] = generateDiceForOutcome(state.selectedBet, shouldWin);
+        }
+
+        // Stop rolling after 850ms and snap to exact 3D cube faces
+        setTimeout(() => {
+            cube1.classList.remove('rolling');
+            cube2.classList.remove('rolling');
+            setDiceVisual(d1, d2);
+
+            const sum = d1 + d2;
+            const won =
+                (state.selectedBet === 'over' && sum > 7) ||
+                (state.selectedBet === 'equal' && sum === 7) ||
+                (state.selectedBet === 'under' && sum < 7);
+
+            let winAmount = 0;
+            if (won) {
+                const mult = state.multipliers[state.selectedBet];
+                winAmount = Number((state.betAmount * mult).toFixed(2));
+                state.balance += winAmount;
+                state.stats.houseProfit -= winAmount;
+
+                banner.className = 'w-[74%] ml-6 py-2 px-3 rounded-lg border text-center text-xs sm:text-sm font-bold text-white shadow-md banner-win';
+                banner.textContent = `আপনি জিতেছেন: ${winAmount} BDT`;
+                playWinSound();
+            } else {
+                banner.className = 'w-[74%] ml-6 py-2 px-3 rounded-lg border text-center text-xs sm:text-sm font-semibold text-white shadow-md banner-lose';
+                banner.textContent = 'অন্য সময় আপনার সৌভাগ্য কামনা করছি';
+                playLoseSound();
+            }
+
+            // Save log
+            const betLabels = { over: 'বেশি 7', equal: 'সমান 7', under: 'নিচে 7' };
+            state.history.unshift({
+                choice: betLabels[state.selectedBet],
+                dice: `${d1} + ${d2} = ${sum}`,
+                bet: state.betAmount,
+                won: won,
+                payout: won ? `+${winAmount}` : `-${state.betAmount}`,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+            });
+
+            updateUI();
+            renderAdminLogs();
+
+            state.isRolling = false;
+            document.getElementById('playBtn').disabled = false;
+
+            if (state.autoRoll) {
+                state.autoRollTimer = setTimeout(() => {
+                    if (state.autoRoll) rollDiceGame();
+                }, 1100);
+            }
+        }, 850);
+    }
+
+    function toggleAutoRoll() {
+        playClickSound();
+        state.autoRoll = !state.autoRoll;
+        const inner = document.getElementById('autoRollInner');
+        const label = document.getElementById('autoRollLabel');
+        if (state.autoRoll) {
+            inner.style.background = 'linear-gradient(180deg, #d97706 0%, #92400e 100%)';
+            label.textContent = 'STOP';
+            showToast('অটো প্লে চালু হয়েছে');
+            if (!state.isRolling) rollDiceGame();
+        } else {
+            inner.style.background = '';
+            label.textContent = 'AUTO';
+            clearTimeout(state.autoRollTimer);
+            showToast('অটো প্লে বন্ধ করা হয়েছে');
+        }
+    }
+
+    function toggleSound() {
+        state.soundEnabled = !state.soundEnabled;
+        document.getElementById('soundOnIcon').classList.toggle('hidden', !state.soundEnabled);
+        document.getElementById('soundOffIcon').classList.toggle('hidden', state.soundEnabled);
+        if (state.soundEnabled) playClickSound();
+    }
+
+    // =========================================================
+    // ADMIN CONTROL PANEL FUNCTIONS
+    // =========================================================
+    function toggleAdminView() {
+        playClickSound();
+        if (!state.isAdminUnlocked) {
+            openAdminAuthModal();
+            return;
+        }
+
+        state.isAdminOpen = !state.isAdminOpen;
+        const gameView = document.getElementById('gameView');
+        const adminView = document.getElementById('adminView');
+        const toggleText = document.getElementById('adminToggleText');
+
+        if (state.isAdminOpen) {
+            if (state.autoRoll) toggleAutoRoll();
+            gameView.classList.add('hidden');
+            adminView.classList.remove('hidden');
+            toggleText.textContent = 'গেম ভিউ';
+            renderAdminLogs();
+        } else {
+            adminView.classList.add('hidden');
+            gameView.classList.remove('hidden');
+            toggleText.textContent = 'অ্যাডমিন';
+        }
+    }
+
+    function openAdminAuthModal() {
+        const input = document.getElementById('adminPassInput');
+        const errorEl = document.getElementById('adminPassError');
+        input.value = '';
+        input.type = 'password';
+        document.getElementById('eyeOpenIcon').classList.remove('hidden');
+        document.getElementById('eyeClosedIcon').classList.add('hidden');
+        errorEl.classList.add('hidden');
+        document.getElementById('adminAuthModal').classList.remove('hidden');
+        setTimeout(() => input.focus(), 100);
+    }
+
+    function toggleAdminPassVisibility() {
+        const input = document.getElementById('adminPassInput');
+        const openIcon = document.getElementById('eyeOpenIcon');
+        const closedIcon = document.getElementById('eyeClosedIcon');
+        if (input.type === 'password') {
+            input.type = 'text';
+            openIcon.classList.add('hidden');
+            closedIcon.classList.remove('hidden');
+        } else {
+            input.type = 'password';
+            openIcon.classList.remove('hidden');
+            closedIcon.classList.add('hidden');
+        }
+    }
+
+    function verifyAdminPassword() {
+        playClickSound();
+        const entered = document.getElementById('adminPassInput').value;
+        const errorEl = document.getElementById('adminPassError');
+
+        if (entered === state.adminPassword) {
+            state.isAdminUnlocked = true;
+            errorEl.classList.add('hidden');
+            closeModal('adminAuthModal');
+            showToast('অ্যাডমিন প্যানেল আনলক হয়েছে!');
+            toggleAdminView();
+        } else {
+            errorEl.classList.remove('hidden');
+            playLoseSound();
+        }
+    }
+
+    function lockAdminPanel() {
+        playClickSound();
+        state.isAdminUnlocked = false;
+        state.isAdminOpen = false;
+        document.getElementById('adminView').classList.add('hidden');
+        document.getElementById('gameView').classList.remove('hidden');
+        document.getElementById('adminToggleText').textContent = 'অ্যাডমিন';
+        showToast('অ্যাডমিন প্যানেল লক করা হয়েছে');
+    }
+
+    function setOutcomeMode(mode) {
+        playClickSound();
+        state.outcomeMode = mode;
+
+        const modeNames = {
+            fair: 'Fair Random',
+            win: 'Force Win (100%)',
+            lose: 'Force Lose (0%)',
+            custom: `Custom (${state.customWinProb}%)`
+        };
+        document.getElementById('currentModeBadge').textContent = modeNames[mode];
+
+        ['fair', 'win', 'lose', 'custom'].forEach(m => {
+            const btn = document.getElementById(`mode-${m}`);
+            if (m === mode) {
+                btn.className = 'mode-btn py-2 px-2.5 rounded-lg border border-amber-400 bg-amber-500/20 text-white font-bold text-left';
+            } else {
+                btn.className = 'mode-btn py-2 px-2.5 rounded-lg border border-white/15 bg-[#191829] text-gray-300 font-semibold text-left';
+            }
+        });
+        showToast(`রেজাল্ট মোড: ${modeNames[mode]}`);
+    }
+
+    function updateWinProb(val) {
+        state.customWinProb = parseInt(val);
+        document.getElementById('winProbLabel').textContent = `${val}%`;
+        if (state.outcomeMode === 'custom') {
+            document.getElementById('currentModeBadge').textContent = `Custom (${val}%)`;
+        }
+    }
+
+    function saveAdminMultipliers() {
+        playClickSound();
+        const over = parseFloat(document.getElementById('adminMultOver').value) || 2.3;
+        const equal = parseFloat(document.getElementById('adminMultEqual').value) || 5.8;
+        const under = parseFloat(document.getElementById('adminMultUnder').value) || 2.3;
+
+        state.multipliers = { over, equal, under };
+        updateUI();
+        showToast('মাল্টিপ্লায়ার সফলভাবে আপডেট হয়েছে!');
+    }
+
+    function adminModifyBalance(sign) {
+        playClickSound();
+        const amt = parseFloat(document.getElementById('adminBalanceInput').value) || 0;
+        if (amt <= 0) return;
+        state.balance = Math.max(0, state.balance + sign * amt);
+        updateUI();
+        showToast(sign > 0 ? `${amt} ৳ যোগ করা হয়েছে` : `${amt} ৳ কাটা হয়েছে`);
+    }
+
+    function renderPendingDeposits() {
+        const container = document.getElementById('pendingDepositsContainer');
+        if (state.pendingDeposits.length === 0) {
+            container.innerHTML = `<p class="text-[11px] text-gray-500">কোনো পেন্ডিং ডিপোজিট রিকোয়েস্ট নেই</p>`;
+            return;
+        }
+        container.innerHTML = state.pendingDeposits.map(req => `
+            <div class="flex items-center justify-between bg-[#161524] border border-amber-500/30 rounded-lg px-2.5 py-1.5 text-xs">
+                <span>${req.user} • <strong class="text-amber-300">${req.amount} ৳</strong></span>
+                <div class="flex gap-1">
+                    <button onclick="approveDeposit(${req.id})" class="px-2 py-0.5 rounded bg-emerald-600 text-white font-bold text-[10px]">অনুমোদন</button>
+                    <button onclick="rejectDeposit(${req.id})" class="px-2 py-0.5 rounded bg-rose-600 text-white font-bold text-[10px]">বাতিল</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function approveDeposit(id) {
+        const idx = state.pendingDeposits.findIndex(r => r.id === id);
+        if (idx !== -1) {
+            const req = state.pendingDeposits[idx];
+            state.balance += req.amount;
+            state.pendingDeposits.splice(idx, 1);
+            updateUI();
+            renderPendingDeposits();
+            showToast(`${req.amount} ৳ ডিপোজিট অনুমোদিত হয়েছে!`);
+        }
+    }
+
+    function rejectDeposit(id) {
+        state.pendingDeposits = state.pendingDeposits.filter(r => r.id !== id);
+        renderPendingDeposits();
+        showToast('রিকোয়েস্ট বাতিল করা হয়েছে');
+    }
+
+    function renderAdminLogs() {
+        const tbody = document.getElementById('adminLogsBody');
+        if (state.history.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="py-3 text-center text-gray-500">এখনো কোনো খেলা হয়নি</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = state.history.slice(0, 20).map(item => `
+            <tr class="border-b border-white/5">
+                <td class="py-1.5 font-semibold text-gray-200">${item.choice}</td>
+                <td class="py-1.5 text-amber-200">${item.dice}</td>
+                <td class="py-1.5 text-gray-300">${item.bet} ৳</td>
+                <td class="py-1.5 text-right font-bold ${item.won ? 'text-emerald-400' : 'text-rose-400'}">${item.payout} ৳</td>
+            </tr>
+        `).join('');
+    }
+
+    function clearHistoryLogs() {
+        state.history = [];
+        renderAdminLogs();
+        showToast('লগ ক্লিয়ার করা হয়েছে');
+    }
+
+    // =========================================================
+    // MODALS (DEPOSIT, RULES, HISTORY)
+    // =========================================================
+    function openDepositModal() {
+        playClickSound();
+        document.getElementById('depositModal').classList.remove('hidden');
+    }
+
+    function setDepositVal(val) {
+        document.getElementById('userDepositInput').value = val;
+    }
+
+    function instantDeposit() {
+        const amt = parseFloat(document.getElementById('userDepositInput').value) || 0;
+        if (amt <= 0) return;
+        state.balance += amt;
+        updateUI();
+        closeModal('depositModal');
+        showToast(`${amt} ৳ ব্যালেন্স যোগ হয়েছে!`);
+    }
+
+    function requestDeposit() {
+        const amt = parseFloat(document.getElementById('userDepositInput').value) || 0;
+        if (amt <= 0) return;
+        state.pendingDeposits.push({
+            id: Date.now(),
+            user: 'You (Player)',
+            amount: amt
+        });
+        renderPendingDeposits();
+        closeModal('depositModal');
+        showToast('অ্যাডমিন প্যানেলে রিকোয়েস্ট পাঠানো হয়েছে!');
+    }
+
+    function openRulesModal() {
+        playClickSound();
+        document.getElementById('rulesModal').classList.remove('hidden');
+    }
+
+    function openHistoryModal() {
+        playClickSound();
+        const list = document.getElementById('playerHistoryList');
+        if (state.history.length === 0) {
+            list.innerHTML = `<p class="text-center text-gray-400 py-4">কোনো রেকর্ড পাওয়া যায়নি</p>`;
+        } else {
+            list.innerHTML = state.history.slice(0, 15).map(h => `
+                <div class="flex items-center justify-between bg-[#161524] border border-white/10 rounded-lg px-3 py-2">
+                    <div>
+                        <p class="font-bold text-white">${h.choice} <span class="text-amber-300 font-normal">(${h.dice})</span></p>
+                        <p class="text-[10px] text-gray-400">${h.time} • বাজি: ${h.bet} BDT</p>
+                    </div>
+                    <span class="font-extrabold ${h.won ? 'text-emerald-400' : 'text-rose-400'}">${h.payout} ৳</span>
+                </div>
+            `).join('');
+        }
+        document.getElementById('historyModal').classList.remove('hidden');
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.add('hidden');
+    }
+
+    window.onload = init;
+</script>
+
+</body>
+</html>
